@@ -1,5 +1,5 @@
 # Reproducible Research: Peer Assessment 1
-Zaixing Shi, 07/15/2015  
+Zaixing Shi, 07/16/2015  
 
 
 ## Loading and preprocessing the data
@@ -117,7 +117,8 @@ names(mean_int_steps[mean_int_steps==max(mean_int_steps)])
 ## [1] "835"
 ```
 
-That is, on average our sample walked the most during the five-minute interval between 8:35-8:40 -- probably the morning rush hour? 
+That is, on average our sample walked most frequenly during the five-minute interval
+between 8:35-8:40 -- probably the morning rush hour? 
 
 ## Imputing missing values
 To learn how many missing values were present:
@@ -258,21 +259,38 @@ table(weekdays(act$date),act$weekdays)
 ```
 Looks cool!
 
-Now let's plot the time series by weekday and weekend.
+Now let's plot the time series by weekday and weekend. 
+We started with making a summary data of the average steps for weekdays and 
+weekends.
 
 ```r
-invisible(lapply(c("Weekday","Weekend"),function(x) {
+suppressWarnings(mean_int_steps_wd <- data.frame(do.call(rbind,
+  lapply(c("Weekday","Weekend"),function(x) {
   mean_steps <- tapply(act[which(act$weekdays==x),"steps"],
                        act[which(act$weekdays==x),"interval"],mean,na.rm=T)
-    plot(x=names(mean_steps),y=mean_steps,type="l",ylim=c(0,300),
-     xlab="Intervals",ylab="Average steps",
-     main=paste("Average Steps for Intervals on a ",x,sep=""))
-  
-  }
-  ))
+  return(cbind(interval=row.names(mean_steps),mean_steps,group=x))
+  }))))
+
+# conver factor to numeric for plotting
+mean_int_steps_wd[,1:2] <- lapply(mean_int_steps_wd[,1:2], function(f)
+                            as.numeric(levels(f))[f])
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-18-1.png) ![](PA1_template_files/figure-html/unnamed-chunk-18-2.png) 
+Then we plot the avergae steps for each interval by weekday/weekend. This is 
+done with the package "ggplot2".
+
+
+```r
+library(ggplot2)
+ggplot(mean_int_steps_wd,aes(x=interval,y=mean_steps))+
+  geom_line()+
+  facet_grid(group~.)+
+  labs(y="Average steps",x="Interval")+
+  theme_bw()+
+  theme(panel.grid=element_blank())
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-19-1.png) 
 
 So it appears that our sample tend to be more active during the weekend - instead
 of the bi-modal walking pattern observed during weekedays, sample walked more
@@ -306,10 +324,13 @@ t.test(tapply(act[which(act$weekdays=="Weekday"),"steps"],
 ##                -7.74041
 ```
 
-Compared with their performance during weekdays, our sample walked about 8 more steps in every 5-minute intervals during weekend. 
+Compared with their performance during weekdays, our sample walked about 8 
+more steps in every 5-minute intervals during weekend. 
 And this difference is statistically significant (P=0.001853).
 
-I'm so glad they had a chance to relax after a whole week of work!
+I'm so glad they had a chance to relax[^1] after a whole week of work!
+
+[^1]: Relax - the status of walking more hours than working.  
 
 
 
